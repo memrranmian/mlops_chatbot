@@ -2,6 +2,7 @@ name: Deploy to Windows Laptop
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: # Allows you to run this manually from the Actions tab
 
 jobs:
   deploy:
@@ -21,8 +22,7 @@ jobs:
           host: ${{ secrets.CLOUDFLARE_URL }}
           username: ${{ secrets.WINDOWS_USER }}
           password: ${{ secrets.WINDOWS_PASSWORD }}
-          # This line tells SSH to use cloudflared to find your laptop
-          proxy_command: "cloudflared access ssh --hostname %h"
+          port: 22
           script: |
             cd "C:/Users/${{ secrets.WINDOWS_USER }}/myapp"
             docker stop groq-app || true
