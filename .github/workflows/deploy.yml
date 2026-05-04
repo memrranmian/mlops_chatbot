@@ -1,0 +1,31 @@
+name: Deploy to Windows Laptop
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install Cloudflared
+        run: |
+          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
+          sudo dpkg -i cloudflared.deb
+
+      - name: Copy and Run via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.CLOUDFLARE_URL }}
+          username: ${{ secrets.WINDOWS_USER }}
+          password: ${{ secrets.WINDOWS_PASSWORD }}
+          # This line tells SSH to use cloudflared to find your laptop
+          proxy_command: "cloudflared access ssh --hostname %h"
+          script: |
+            cd "C:/Users/${{ secrets.WINDOWS_USER }}/myapp"
+            docker stop groq-app || true
+            docker rm groq-app || true
+            docker build -t groq-app .
+            docker run -d -p 8501:8501 --name groq-app groq-app
