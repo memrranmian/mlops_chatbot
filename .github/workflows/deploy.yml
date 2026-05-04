@@ -2,30 +2,17 @@ name: Deploy to Windows Laptop
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Allows you to run this manually from the Actions tab
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted  # <--- This is the magic line
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      - name: Install Cloudflared
+      - name: Build and Run
         run: |
-          curl -L --output cloudflared.deb https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-          sudo dpkg -i cloudflared.deb
-
-      - name: Copy and Run via SSH
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.CLOUDFLARE_URL }}
-          username: ${{ secrets.WINDOWS_USER }}
-          password: ${{ secrets.WINDOWS_PASSWORD }}
-          port: 22
-          script: |
-            cd "C:/Users/${{ secrets.WINDOWS_USER }}/myapp"
-            docker stop groq-app || true
-            docker rm groq-app || true
-            docker build -t groq-app .
-            docker run -d -p 8501:8501 --name groq-app groq-app
+          docker stop groq-app || true
+          docker rm groq-app || true
+          docker build -t groq-app .
+          docker run -d -p 8501:8501 --name groq-app groq-app
